@@ -40,6 +40,13 @@ python3 -m http.server 8747
 
 操場、禮堂、課室大樓、飯堂、圖書館、天台，同兩個隱藏位：秘密小樹林、隱藏角落。
 
+校園南面仲有兩個可以隨時玩、唔影響三個任務嘅地方：
+
+- **游泳池**：25 米自由泳校隊選拔。左右揀泳線，一下一下撳「衝」划水。節奏穩先至快，撳太密會攰。第一或者第二名就加入游泳校隊。
+- **有蓋操場**：30 秒射籃。搖桿或者 WASD 瞄準，撳「互動」或者 E 射出（手機可以放開搖桿）。遠籃分數更高，連續入波有連擊。最高分會留低。
+
+紀錄同任務一樣，留喺呢部裝置（`qingwan-primary-v1`）。
+
 ## 試玩畫面
 
 `screenshots/` 有手機同電腦畫面：校門、橫向手機，同完成三個任務。
@@ -54,4 +61,4 @@ python3 -m http.server 8747
 
 ## English
 
-圓形小學 is a small, kid-friendly campus toy: walk around, then finish three short errands. It is a fictional school. Open `index.html` in a browser, or serve the folder with any static server. Phone: drag the left side to walk, hold 衝 to sprint, tap 互動 beside a person or the quest board. Desktop: WASD or arrow keys, Shift to sprint, E to talk.
+圓形小學 is a small, kid-friendly campus toy: walk around, then finish three short errands. It is a fictional school. Open `index.html` in a browser, or serve the folder with any static server. Phone: drag the left side to walk, hold 衝 to sprint, tap 互動 beside a person or the quest board. Desktop: WASD or arrow keys, Shift to sprint, E to talk. South of the playground there is a pool (swim-team tryout) and a covered court (30-second shooting). Both are optional and do not change the three errands.

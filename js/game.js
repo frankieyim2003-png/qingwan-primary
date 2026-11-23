@@ -3,7 +3,7 @@
 (function () {
   "use strict";
 
-  const WORLD = { w: 2000, h: 1500 };
+  const WORLD = { w: 2000, h: 2000 };
   const INK = "#3d2c22";
   const FONT = '"QingWan", "PingFang HK", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", "WenQuanYi Micro Hei", sans-serif';
   const PLAYER_R = 12;
@@ -27,6 +27,15 @@
   const BOOK = { x: 180, y: 755 };
   const VIEWPOINT = { x: 1668, y: 248 };
   const START = { x: 1516, y: 1268 };
+  const POOL = { x: 56, y: 1560, w: 860, h: 400 };
+  const POOL_WATER = { x: 78, y: 1710, w: 816, h: 228 };
+  const POOL_MAT = { x: 108, y: 1600, w: 210, h: 90 };
+  const COURT = { x: 1068, y: 1560, w: 880, h: 400 };
+  const HOOP = { x: 1484, y: 1884, w: 52, h: 40 };
+  const COURT_MAT = { x: 1360, y: 1720, w: 240, h: 120 };
+  const HEDGE_JOIN = { x: 900, y: 1560, w: 180, h: 400 };
+  const SWIM_LEN = 25;
+  const STROKE_IDEAL = 0.5;
 
   const params = new URLSearchParams(location.search);
   const debug = params.has("debug");
@@ -95,6 +104,10 @@
       doors: { s: [{ offset: 150, length: 100 }] } },
     { id: "nook", name: "隱藏角落", ...NOOK, wall: "#2f9e44", floor: "#d3f9d8", ink: "#2b8a3e", t: 26, floorLabel: "小角落", hedge: true,
       doors: { e: [{ offset: 70, length: 100 }] } },
+    { id: "pool", name: "游泳池", ...POOL, kind: "pool", wall: "#1c7ed6", floor: "#e7f5ff", ink: "#1864ab", t: 22, floorLabel: "游泳池",
+      doors: { n: [{ offset: 370, length: 120 }] } },
+    { id: "court", name: "有蓋操場", ...COURT, kind: "court", wall: "#e8590c", floor: "#d8f5d0", ink: "#d9480f", t: 22, floorLabel: "有蓋操場",
+      doors: { n: [{ offset: 375, length: 130 }] } },
   ];
 
   const props = [
@@ -132,6 +145,8 @@
     { x: 560, y: 1424, r: 24, c: "#2f9e44" },
     { x: 980, y: 1422, r: 28, c: "#2b8a3e" },
     { x: 520, y: 1016, r: 26, c: "#2f9e44" },
+    { x: 168, y: 1472, r: 26, c: "#2f9e44" },
+    { x: 1872, y: 1476, r: 28, c: "#2b8a3e" },
   ];
 
   const signs = [
@@ -150,6 +165,9 @@
     { x: 1400, y: 150, text: "天台", floor: 1 },
     { x: 1165, y: 312, text: "落樓", floor: 1 },
     { x: 1668, y: 196, text: "觀景位", floor: 1 },
+    { x: 486, y: 1528, text: "游泳池", floor: 0 },
+    { x: 1508, y: 1528, text: "有蓋操場", floor: 0 },
+    { x: 214, y: 1634, text: "起點", floor: 0 },
   ];
 
   const paths = [
@@ -158,6 +176,8 @@
     { x: 1768, y: 500, w: 170, h: 940 },
     { x: 900, y: 160, w: 150, h: 360 },
     { x: 48, y: 980, w: 1904, h: 110 },
+    { x: 960, y: 1320, w: 200, h: 180 },
+    { x: 280, y: 1484, w: 1500, h: 100 },
   ];
 
   const surfaces = [
@@ -177,6 +197,9 @@
     { id: "nook", name: "隱藏角落", floor: 0, ...NOOK },
     { id: "playground", name: "操場", floor: 0, x: 400, y: 1060, w: 720, h: 370 },
     { id: "gate", name: "校門", floor: 0, x: 1180, y: 1088, w: 760, h: 380 },
+    { id: "pool", name: "游泳池", floor: 0, ...POOL },
+    { id: "court", name: "有蓋操場", floor: 0, ...COURT },
+    { id: "south", name: "南面廣場", floor: 0, x: 280, y: 1468, w: 1500, h: 90 },
   ];
 
   const MISSIONS = [
@@ -244,6 +267,12 @@
     { id: "janitor", kind: "janitor", name: "林校工", x: 1688, y: 778, r: 14, floor: 0, facing: -Math.PI / 2, phase: 0,
       style: { shirt: "#ffd8a8", pants: "#495057", hair: "#868e96", scale: 1.16, vest: true, broom: true } },
     { id: "cat", kind: "cat", name: "糯米", x: 150, y: 176, r: 8, floor: 0 },
+    { id: "jun", kind: "swimmer", sprite: "kit", name: "阿俊", x: 640, y: 1652, r: 12, floor: 0, facing: Math.PI / 2, phase: 0.2,
+      style: { shirt: "#74c0fc", pants: "#1971c2", hair: "#2b2118", scale: 0.96 } },
+    { id: "ching", kind: "swimmer", sprite: "min", name: "小晴", x: 760, y: 1646, r: 12, floor: 0, facing: Math.PI / 2, phase: 0.8,
+      style: { shirt: "#ffa8a8", pants: "#f08c00", hair: "#5c3317", scale: 0.94 } },
+    { id: "bo", kind: "swimmer", sprite: "kit", name: "家寶", x: 860, y: 1656, r: 12, floor: 0, facing: Math.PI / 2, phase: 1.4,
+      style: { shirt: "#8ce99a", pants: "#2b8a3e", hair: "#3d2914", scale: 0.96 } },
   ];
 
   const teacher = npcs[0];
@@ -276,6 +305,10 @@
     timeLeft: 0,
     done: save0.done,
     mute: save0.mute,
+    swimTeam: save0.swimTeam,
+    basketballBest: save0.basketballBest,
+    mode: "world",
+    mini: null,
     everStarted: false,
     grace: 0,
     catching: 0,
@@ -310,6 +343,10 @@
   let tap = null;
   let sprintHeld = false;
   let keys = new Set();
+  let pendingStrokes = 0;
+  let pendingShots = [];
+  let poolArmed = true;
+  let courtArmed = true;
   const joyEl = $("joy");
   const knob = $("joy-knob");
 
@@ -317,15 +354,26 @@
     try {
       const raw = JSON.parse(localStorage.getItem(SAVE_KEY) || "{}");
       const done = new Set(Array.isArray(raw.done) ? raw.done.filter((id) => MISSIONS.some((m) => m.id === id)) : []);
-      return { done, mute: !!raw.mute };
+      const best = Number(raw.basketballBest);
+      return {
+        done,
+        mute: !!raw.mute,
+        swimTeam: !!raw.swimTeam,
+        basketballBest: Number.isFinite(best) && best > 0 ? Math.floor(best) : 0,
+      };
     } catch (err) {
-      return { done: new Set(), mute: false };
+      return { done: new Set(), mute: false, swimTeam: false, basketballBest: 0 };
     }
   }
 
   function persist() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ done: [...state.done], mute: state.mute }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        done: [...state.done],
+        mute: state.mute,
+        swimTeam: !!state.swimTeam,
+        basketballBest: state.basketballBest | 0,
+      }));
     } catch (err) { /* private mode */ }
   }
 
@@ -398,6 +446,7 @@
     for (const b of compounds) addWalls(b, groundSolids);
     for (const p of props) if (p.solid) groundSolids.push({ x: p.x, y: p.y, w: p.w, h: p.h });
     for (const tree of trees) groundSolids.push({ x: tree.x, y: tree.y, r: 9 });
+    groundSolids.push(POOL_WATER, HOOP, HEDGE_JOIN);
 
     const innerL = 1064;
     const innerT = 80;
@@ -605,6 +654,9 @@
     check("觀景位", VIEWPOINT.x, VIEWPOINT.y, 1);
     check("糯米", 150, 176, 0);
     check("林校工", 1688, 778, 0);
+    check("泳池甲板", 480, 1652, 0);
+    check("起點", POOL_MAT.x + 40, POOL_MAT.y + 40, 0);
+    check("射籃位", COURT_MAT.x + 80, COURT_MAT.y + 40, 0);
     for (const n of npcs) check(n.name, n.x, n.y, n.floor);
     check("樓梯上", STAIRS.x + STAIRS.w / 2, STAIRS.y + STAIRS.h / 2, 1);
     const routes = [
@@ -615,6 +667,10 @@
       ["天台", 1, STAIRS.x + 50, STAIRS.y + 40, VIEWPOINT.x, VIEWPOINT.y],
       ["小樹林", 0, START.x, START.y, 160, 170],
       ["隱藏角落", 0, START.x, START.y, 140, 1240],
+      ["去泳池", 0, START.x, START.y, 480, 1652],
+      ["去有蓋操場", 0, START.x, START.y, 1500, 1760],
+      ["泳池返校門", 0, 480, 1652, START.x, START.y],
+      ["球場返泳池", 0, 1500, 1760, 480, 1652],
     ];
     for (const route of routes) {
       const grid = route[1] ? roofGrid : groundGrid;
@@ -671,6 +727,10 @@
     for (const n of npcs) consider({ kind: n.kind, npc: n, name: n.name, x: n.x, y: n.y, range: 62, floor: n.floor });
     consider({ kind: "gate", x: 1520, y: 1408, range: 70, floor: 0 });
     consider({ kind: "fountain", x: 828, y: 1356, range: 58, floor: 0 });
+    consider({ kind: "poolSign", x: 486, y: 1510, range: 72, floor: 0 });
+    consider({ kind: "poolSign", x: 214, y: 1620, range: 64, floor: 0 });
+    consider({ kind: "courtSign", x: 1508, y: 1510, range: 72, floor: 0 });
+    consider({ kind: "hoop", x: HOOP.x + HOOP.w / 2, y: HOOP.y + 8, range: 78, floor: 0 });
     list.sort((a, b) => a.d - b.d);
     return list;
   }
@@ -743,6 +803,8 @@
     state.dialog = opts;
     player.vx = 0;
     player.vy = 0;
+    pendingStrokes = 0;
+    pendingShots = [];
     endJoy();
     $("sheet-title").textContent = opts.title;
     $("sheet-body").textContent = opts.body;
@@ -778,7 +840,7 @@
   function openHelp() {
     openDialog({
       title: "點樣玩",
-      body: "行：撳住畫面左邊。電腦用 WASD 或者方向鍵。\n衝：按住右邊「衝」，或者 Shift。\n互動：行近之後撳「互動」，或者 E。\n小地圖：黃點係你，紅點係目標。\n任務板喺校門。三個任務都可以重玩。",
+      body: "行：撳住畫面左邊。電腦用 WASD 或者方向鍵。\n衝：按住右邊「衝」，或者 Shift。\n互動：行近之後撳「互動」，或者 E。\n小地圖：黃點係你，紅點係目標。\n任務板喺校門。三個任務都可以重玩。\n\n校園南面有游泳池同有蓋操場，可以隨時玩，唔影響三個任務。\n游泳：左右揀泳線，一下一下撳「衝」划水。\n射籃：搖桿或者 WASD 瞄準，撳「互動」或者 E 射出。",
       buttons: [{ label: "知道喇", primary: true, onClick: closeDialog }],
     });
   }
@@ -786,7 +848,7 @@
   function openWelcome() {
     openDialog({
       title: "圓形小學",
-      body: "你好，我係小逸！呢度係我哋嘅小學。\n\n行：撳住左下角搖桿。\n電腦可以用 WASD 或者方向鍵。\n衝：按住「衝」或者 Shift。\n互動：行近之後撳「互動」或者 E。\n\n先四周圍走吓，再去校門任務板揀任務。",
+      body: "你好，我係小逸！呢度係我哋嘅小學。\n\n行：撳住左下角搖桿。\n電腦可以用 WASD 或者方向鍵。\n衝：按住「衝」或者 Shift。\n互動：行近之後撳「互動」或者 E。\n\n先四周圍走吓，再去校門任務板揀任務。\n校園南面有游泳池同有蓋操場，可以玩迷你遊戲。",
       buttons: [{ label: "開始逛校園", primary: true, onClick: () => { closeDialog(); joyEl.classList.add("hint"); } }],
     });
   }
@@ -932,6 +994,8 @@
   }
 
   function doInteract(forced) {
+    if (state.mode === "basket") { queueShot(); return; }
+    if (state.mode !== "world") return;
     if (state.dialog || state.catching > 0) return;
     const target = forced || nearestInteract();
     if (!target) return;
@@ -1001,6 +1065,56 @@
         buttons: [{ label: "喝咗兩口", primary: true, onClick: closeDialog }],
       });
     }
+    if (target.kind === "swimmer" || target.kind === "poolSign") return openPoolInvite();
+    if (target.kind === "hoop" || target.kind === "courtSign") return openCourtInvite();
+  }
+
+  function playBlocked() {
+    return !!(state.mission || state.resolving);
+  }
+
+  function openPoolInvite() {
+    if (state.mode !== "world" || state.dialog) return;
+    if (playBlocked()) {
+      openDialog({
+        title: "游泳池",
+        body: "校隊選拔要專心游。\n而家有任務進行中，完成或者放棄之後再嚟玩啦。",
+        buttons: [{ label: "知道喇", primary: true, onClick: closeDialog }],
+      });
+      return;
+    }
+    const joined = state.swimTeam;
+    openDialog({
+      title: joined ? "游泳校隊" : "校隊選拔",
+      body: joined
+        ? "你已經係游泳校隊！可以再游一次 25 米自由泳。\n\n左右揀泳線。一下一下撳「衝」或者 Shift 划水。\n節奏穩就快，撳太密會攰。"
+        : "25 米自由泳，同三位同學一齊游。\n\n左右揀泳線。一下一下撳「衝」或者 Shift 划水。\n節奏穩就快，撳太密會攰。\n游到第一或者第二名，就可以加入游泳校隊。",
+      buttons: [
+        { label: joined ? "再練習一次" : "參加選拔", primary: true, onClick: startSwimRace },
+        { label: "再逛吓", onClick: closeDialog },
+      ],
+    });
+  }
+
+  function openCourtInvite() {
+    if (state.mode !== "world" || state.dialog) return;
+    if (playBlocked()) {
+      openDialog({
+        title: "有蓋操場",
+        body: "射籃挑戰要專心。\n而家有任務進行中，完成或者放棄之後再嚟玩啦。",
+        buttons: [{ label: "知道喇", primary: true, onClick: closeDialog }],
+      });
+      return;
+    }
+    const best = state.basketballBest;
+    openDialog({
+      title: "射籃挑戰",
+      body: "30 秒之內，射得幾多就幾多。\n搖桿或者 WASD 瞄準。\n撳「互動」或者 E 射出，手機亦可以放開搖桿就射。\n\n近籃 2 分，中距離 3 分，遠籃 5 分。\n連續入波有連擊加分。\n最高紀錄：" + (best > 0 ? best + " 分" : "未有"),
+      buttons: [
+        { label: "開始射籃", primary: true, onClick: startBasketGame },
+        { label: "再逛吓", onClick: closeDialog },
+      ],
+    });
   }
 
   function updateStars() {
@@ -1227,6 +1341,8 @@
   }
 
   function update(dt) {
+    if (state.mode === "swim") { updateSwim(dt); return; }
+    if (state.mode === "basket") { updateBasket(dt); return; }
     updatePlayer(dt);
     updateTeacher(dt);
     updateKids(dt);
@@ -1243,6 +1359,21 @@
         chimeOk();
       }
     }
+    updatePlaySpots();
+  }
+
+  function updatePlaySpots() {
+    if (state.mode !== "world" || state.dialog) return;
+    const onPool = inRect(player.x, player.y, POOL_MAT);
+    const onCourt = inRect(player.x, player.y, COURT_MAT);
+    if (onPool && poolArmed) {
+      poolArmed = false;
+      openPoolInvite();
+    } else if (!onPool) poolArmed = true;
+    if (onCourt && courtArmed && !state.dialog) {
+      courtArmed = false;
+      openCourtInvite();
+    } else if (!onCourt) courtArmed = true;
   }
 
   function updateAmbient(dt) {
@@ -1425,6 +1556,7 @@
     for (const p of paths) fillRound(c, p.x, p.y, p.w, p.h, 16, art.pat.sand);
     if (state.mission?.id === "stealth") drawVision(c);
     for (const b of compounds) drawCompound(c, b);
+    drawHedgeJoin(c);
     for (const p of props) drawProp(c, p);
     drawStairs(c);
     drawFence(c);
@@ -1565,6 +1697,8 @@
   };
 
   function drawCompound(c, b) {
+    if (b.kind === "pool") { drawPoolArea(c, b); return; }
+    if (b.kind === "court") { drawCourtArea(c, b); return; }
     const t = b.t || 24;
     c.save();
     c.globalAlpha = 0.14;
@@ -1753,6 +1887,10 @@
       return { img: art.xiaole, rect: XIAOLE[row][col], dh: 80 };
     }
     if (actor.kind === "cat") return { img: art.npcs, rect: NPC_FRAMES.cat[0], dh: 48 };
+    if (actor.kind === "swimmer") {
+      const who = actor.sprite === "min" ? "min" : "kit";
+      return { img: art.npcs, rect: NPC_FRAMES[who][facingDir(actor.facing)], dh: 62 };
+    }
     const who = actor.kind === "teacher" ? "chen"
       : actor.kind === "librarian" ? "huang"
       : actor.kind === "janitor" ? "lin"
@@ -1990,6 +2128,19 @@
   }
 
   function render() {
+    if (state.mode === "swim" || state.mode === "basket") {
+      const dpr = state.dpr;
+      const cssW = state.cssW;
+      const cssH = state.cssH;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      if (state.mode === "swim") drawSwim(ctx, cssW, cssH);
+      else drawBasket(ctx, cssW, cssH);
+      updateDom();
+      return;
+    }
     const dpr = state.dpr;
     const cssW = state.cssW;
     const cssH = state.cssH;
@@ -2116,6 +2267,10 @@
       miniCtx.fillStyle = player.floor === 1 && b.id !== "class" ? "rgba(255,255,255,0.25)" : b.wall;
       miniCtx.fillRect(b.x * sx, b.y * sy, b.w * sx, b.h * sy);
     }
+    miniCtx.fillStyle = "#4dabf7";
+    miniCtx.fillRect(POOL_WATER.x * sx, POOL_WATER.y * sy, POOL_WATER.w * sx, POOL_WATER.h * sy);
+    miniCtx.fillStyle = "#2f9e44";
+    miniCtx.fillRect(HEDGE_JOIN.x * sx, HEDGE_JOIN.y * sy, HEDGE_JOIN.w * sx, HEDGE_JOIN.h * sy);
     miniCtx.strokeStyle = "rgba(255,255,255,0.85)";
     miniCtx.lineWidth = 2;
     miniCtx.strokeRect(camX * sx, camY * sy, state.viewW * sx, state.viewH * sy);
@@ -2145,12 +2300,22 @@
     if (el.textContent !== text) el.textContent = text;
   }
 
+  function updateChip() {
+    const chip = $("extra-chip");
+    if (!chip) return;
+    if (state.swimTeam) {
+      chip.classList.remove("hidden");
+      setText(chip, "游泳校隊");
+    } else chip.classList.add("hidden");
+  }
+
   function updateDom() {
     const zone = currentZone();
-    setText($("place"), zone.name);
-    if (state.lastZoneAnnounce !== zone.name) {
-      state.lastZoneAnnounce = zone.name;
-      announce("而家喺" + zone.name);
+    const placeName = state.mode === "swim" ? "校隊選拔" : state.mode === "basket" ? "射籃" : zone.name;
+    setText($("place"), placeName);
+    if (state.lastZoneAnnounce !== placeName) {
+      state.lastZoneAnnounce = placeName;
+      announce("而家喺" + placeName);
     }
     const card = $("mission-card");
     if (state.mission) {
@@ -2171,8 +2336,11 @@
         timer.classList.toggle("urgent", sec <= 10);
       } else timer.classList.add("hidden");
     } else card.classList.add("hidden");
-    const near = nearestInteract();
-    $("btn-interact").classList.toggle("hidden", !near || !!state.dialog);
+    const near = state.mode === "world" ? nearestInteract() : null;
+    const showInteract = state.mode === "basket" ? !state.dialog && state.mini && state.mini.phase === "play" : !!near && !state.dialog;
+    $("btn-interact").classList.toggle("hidden", !showInteract);
+    $("btn-leave").classList.toggle("hidden", state.mode === "world" || !!state.dialog);
+    $("minimap-wrap").classList.toggle("hidden", state.mode !== "world");
     $("badge").classList.toggle("hidden", !state.carrying);
     const toastEl = $("toast");
     if (state.toast && ambient < state.toastUntil) {
@@ -2228,6 +2396,7 @@
   }
 
   function tryWorldTap(clientX, clientY) {
+    if (state.mode !== "world") return;
     const rect = canvas.getBoundingClientRect();
     const wx = (clientX - rect.left) / state.zoom + camX;
     const wy = (clientY - rect.top) / state.zoom + camY;
@@ -2273,6 +2442,13 @@
   function onPointerUp(e) {
     if (joy.active && e.pointerId === joy.id) {
       const wasTap = tap && !tap.moved && joy.max < 0.28 && performance.now() - tap.t < 340;
+      if (!wasTap && state.mode === "basket" && state.mini && state.mini.phase === "play" && joy.max > 0.34 && !state.dialog) {
+        const m = state.mini;
+        m.aimX = clamp(joy.x * 1.12, -1, 1);
+        m.aimY = clamp(0.5 - joy.y * 0.55, 0.12, 0.94);
+        m.lastInput = "stick";
+        queueShot();
+      }
       endJoy();
       if (wasTap) tryWorldTap(e.clientX, e.clientY);
       tap = null;
@@ -2318,11 +2494,1053 @@
     requestAnimationFrame(frame);
   }
 
+  let waterPat = null;
+  let indoorPat = null;
+
+  function paintTile(size, draw) {
+    const cnv = document.createElement("canvas");
+    cnv.width = size;
+    cnv.height = size;
+    draw(cnv.getContext("2d"), size);
+    art.keep.push(cnv);
+    return ctx.createPattern(cnv, "repeat");
+  }
+
+  function waterPattern() {
+    if (!waterPat) {
+      waterPat = paintTile(140, (g, S) => {
+        const sky = g.createLinearGradient(0, 0, S, S);
+        g.fillStyle = "#3aa0e0";
+        g.fillRect(0, 0, S, S);
+        g.fillStyle = "rgba(255,255,255,0.16)";
+        g.fillRect(0, 18, S, 10);
+        g.fillRect(0, 78, S, 8);
+        g.fillStyle = "rgba(14, 90, 150, 0.12)";
+        g.fillRect(0, 46, S, 14);
+        g.fillStyle = "rgba(255,255,255,0.8)";
+        g.beginPath();
+        g.arc(30, 40, 1.6, 0, Math.PI * 2);
+        g.arc(92, 96, 1.4, 0, Math.PI * 2);
+        g.arc(70, 24, 1.2, 0, Math.PI * 2);
+        g.fill();
+      });
+    }
+    return waterPat;
+  }
+
+  function indoorPattern() {
+    if (!indoorPat) {
+      indoorPat = paintTile(120, (g, S) => {
+        g.fillStyle = "#c6ebbd";
+        g.fillRect(0, 0, S, S);
+        g.fillStyle = "rgba(255,255,255,0.28)";
+        g.fillRect(0, 0, S, S / 2);
+        g.strokeStyle = "rgba(47, 158, 68, 0.28)";
+        g.lineWidth = 2;
+        g.strokeRect(1, 1, S - 2, S - 2);
+      });
+    }
+    return indoorPat;
+  }
+
+  function drawHedgeJoin(c) {
+    const h = HEDGE_JOIN;
+    c.save();
+    c.globalAlpha = 0.14;
+    c.fillStyle = "#1b4332";
+    roundRect(c, h.x + 4, h.y + 6, h.w, h.h, 14);
+    c.fill();
+    c.restore();
+    roundRect(c, h.x, h.y, h.w, h.h, 14);
+    c.fillStyle = art.pat.hedge || "#2f9e44";
+    c.fill();
+    c.lineWidth = 4;
+    c.strokeStyle = INK;
+    c.stroke();
+  }
+
+  function drawPoolArea(c, b) {
+    const t = b.t || 22;
+    c.save();
+    c.globalAlpha = 0.14;
+    c.fillStyle = "#1c4f82";
+    roundRect(c, b.x + 6, b.y + 8, b.w, b.h, 16);
+    c.fill();
+    c.restore();
+    roundRect(c, b.x, b.y, b.w, b.h, 16);
+    c.fillStyle = "#e7f5ff";
+    c.fill();
+    c.lineWidth = 4;
+    c.strokeStyle = INK;
+    c.stroke();
+    fillRound(c, b.x + t, b.y + t, b.w - t * 2, b.h - t * 2, 8, art.pat.court || "#f4e2c4");
+    const wtr = POOL_WATER;
+    c.save();
+    roundRect(c, wtr.x, wtr.y, wtr.w, wtr.h, 12);
+    c.clip();
+    c.fillStyle = waterPattern() || "#4dabf7";
+    c.fillRect(wtr.x - 20, wtr.y - 20, wtr.w + 40, wtr.h + 40);
+    c.globalAlpha = 0.28;
+    c.strokeStyle = "#e7f5ff";
+    c.lineWidth = 2;
+    const drift = reduceMotion ? 0 : (ambient * 16) % 70;
+    for (let i = 0; i < 5; i++) {
+      const y = wtr.y + 24 + i * 42;
+      c.beginPath();
+      c.moveTo(wtr.x, y);
+      c.quadraticCurveTo(wtr.x + 80 + drift, y - 6, wtr.x + 180, y);
+      c.quadraticCurveTo(wtr.x + 320 + drift, y + 6, wtr.x + wtr.w, y);
+      c.stroke();
+    }
+    c.restore();
+    c.save();
+    roundRect(c, wtr.x, wtr.y, wtr.w, wtr.h, 12);
+    c.clip();
+    for (let lane = 1; lane < 4; lane++) {
+      const y = wtr.y + (wtr.h * lane) / 4;
+      for (let x = wtr.x + 10; x < wtr.x + wtr.w - 8; x += 18) {
+        c.beginPath();
+        c.arc(x, y, 3.3, 0, Math.PI * 2);
+        c.fillStyle = ((x / 18) | 0) % 2 ? "#ff6b6b" : "#fff";
+        c.fill();
+        c.lineWidth = 1;
+        c.strokeStyle = INK;
+        c.stroke();
+      }
+    }
+    c.restore();
+    c.strokeStyle = "#1864ab";
+    c.lineWidth = 3;
+    roundRect(c, wtr.x, wtr.y, wtr.w, wtr.h, 12);
+    c.stroke();
+    for (let i = 0; i < 4; i++) {
+      const y = wtr.y + (wtr.h * (i + 0.5)) / 4;
+      roundRect(c, wtr.x + 8, y - 12, 22, 24, 4);
+      c.fillStyle = i === 1 ? "#ffd43b" : "#f8f9fa";
+      c.fill();
+      c.lineWidth = 2;
+      c.strokeStyle = INK;
+      c.stroke();
+    }
+    c.fillStyle = "rgba(255,255,255,0.88)";
+    c.font = "700 18px " + FONT;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText("25米", wtr.x + wtr.w / 2, wtr.y + wtr.h / 2);
+    for (const side of Object.keys(b.doors || {})) {
+      for (const gap of b.doors[side]) drawDoorMat(c, b, side, gap, t);
+    }
+    c.save();
+    c.globalAlpha = 0.72;
+    c.fillStyle = "#1864ab";
+    c.font = "700 26px " + FONT;
+    c.textAlign = "center";
+    c.fillText("游泳池", b.x + 250, b.y + 78);
+    c.restore();
+    if (state.swimTeam) {
+      const px = b.x + b.w - 118;
+      const py = b.y + 52;
+      c.fillStyle = "#748ffc";
+      c.fillRect(px + 8, py, 4, 36);
+      c.fillStyle = "#ffd43b";
+      c.strokeStyle = INK;
+      c.lineWidth = 2;
+      c.beginPath();
+      c.moveTo(px + 12, py);
+      c.lineTo(px + 48, py + 10);
+      c.lineTo(px + 12, py + 20);
+      c.closePath();
+      c.fill();
+      c.stroke();
+      c.fillStyle = "#e8590c";
+      c.font = "700 11px " + FONT;
+      c.textAlign = "left";
+      c.textBaseline = "middle";
+      c.fillText("校隊", px + 16, py + 10);
+    }
+    c.save();
+    c.strokeStyle = "#f08c00";
+    c.lineWidth = 3;
+    c.setLineDash([7, 5]);
+    roundRect(c, POOL_MAT.x, POOL_MAT.y, POOL_MAT.w, POOL_MAT.h, 12);
+    c.stroke();
+    c.restore();
+  }
+
+  function drawHoopWorld(c) {
+    const x = HOOP.x + HOOP.w / 2;
+    const y = HOOP.y + 6;
+    c.fillStyle = "#868e96";
+    c.strokeStyle = INK;
+    c.lineWidth = 2;
+    roundRect(c, x - 5, y + 6, 10, 26, 2);
+    c.fill();
+    c.stroke();
+    roundRect(c, x - 28, y - 18, 56, 30, 4);
+    c.fillStyle = "#f8f9fa";
+    c.fill();
+    c.stroke();
+    c.strokeStyle = "#e8590c";
+    c.lineWidth = 2;
+    c.strokeRect(x - 14, y - 10, 28, 16);
+    c.strokeStyle = "#f76707";
+    c.lineWidth = 3;
+    c.beginPath();
+    c.ellipse(x, y + 16, 16, 7, 0, 0, Math.PI * 2);
+    c.stroke();
+    c.strokeStyle = "rgba(61,44,34,0.55)";
+    c.lineWidth = 1.2;
+    for (let i = -2; i <= 2; i++) {
+      c.beginPath();
+      c.moveTo(x + i * 6, y + 18);
+      c.lineTo(x + i * 3, y + 30);
+      c.stroke();
+    }
+  }
+
+  function drawCourtArea(c, b) {
+    const t = b.t || 22;
+    c.save();
+    c.globalAlpha = 0.14;
+    c.fillStyle = "#7a3e12";
+    roundRect(c, b.x + 6, b.y + 8, b.w, b.h, 16);
+    c.fill();
+    c.restore();
+    roundRect(c, b.x, b.y, b.w, b.h, 16);
+    c.fillStyle = "#fff4e6";
+    c.fill();
+    c.lineWidth = 4;
+    c.strokeStyle = INK;
+    c.stroke();
+    const ix = b.x + t;
+    const iy = b.y + t;
+    const iw = b.w - t * 2;
+    const ih = b.h - t * 2;
+    fillRound(c, ix, iy, iw, ih, 8, indoorPattern() || "#c6ebbd");
+    c.save();
+    roundRect(c, ix, iy, iw, ih, 8);
+    c.clip();
+    c.strokeStyle = "rgba(90, 58, 36, 0.16)";
+    c.lineWidth = 5;
+    for (let x = ix + 46; x < ix + iw; x += 92) {
+      c.beginPath();
+      c.moveTo(x, iy);
+      c.lineTo(x, iy + ih);
+      c.stroke();
+    }
+    c.fillStyle = "rgba(232, 89, 12, 0.16)";
+    c.fillRect(ix, iy, iw, 16);
+    c.fillStyle = "rgba(255, 212, 59, 0.35)";
+    for (let x = ix; x < ix + iw; x += 28) {
+      if (((x / 28) | 0) % 2 === 0) c.fillRect(x, iy, 14, 16);
+    }
+    c.strokeStyle = "rgba(255,255,255,0.95)";
+    c.lineWidth = 3;
+    c.strokeRect(ix + 28, iy + 28, iw - 56, ih - 56);
+    const keyW = 150;
+    const keyX = ix + iw / 2 - keyW / 2;
+    c.strokeRect(keyX, iy + ih - 150, keyW, 122);
+    c.beginPath();
+    c.arc(ix + iw / 2, iy + ih - 150, 54, Math.PI, 0);
+    c.stroke();
+    c.beginPath();
+    c.arc(ix + iw / 2, iy + ih - 36, Math.min(iw, ih) * 0.42, Math.PI * 1.08, Math.PI * 1.92);
+    c.stroke();
+    c.restore();
+    const posts = [
+      [ix + 18, iy + 18],
+      [ix + iw - 18, iy + 18],
+      [ix + 18, iy + ih - 18],
+      [ix + iw - 18, iy + ih - 18],
+    ];
+    for (const [px, py] of posts) {
+      c.fillStyle = "#e7c08a";
+      c.strokeStyle = INK;
+      c.lineWidth = 2;
+      c.beginPath();
+      c.arc(px, py, 7, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+    }
+    drawHoopWorld(c);
+    c.save();
+    c.globalAlpha = 0.5;
+    c.fillStyle = "#2b8a3e";
+    c.font = "700 28px " + FONT;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText("有蓋操場", b.x + b.w / 2, iy + 70);
+    c.restore();
+    if (state.basketballBest > 0) {
+      const label = "最高 " + state.basketballBest;
+      c.font = "700 16px " + FONT;
+      const tw = c.measureText(label).width + 16;
+      const bx = b.x + b.w - tw - 36;
+      const by = iy + 28;
+      roundRect(c, bx, by, tw, 26, 8);
+      c.fillStyle = "#fff8ef";
+      c.fill();
+      c.lineWidth = 2;
+      c.strokeStyle = INK;
+      c.stroke();
+      c.fillStyle = "#e8590c";
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(label, bx + tw / 2, by + 13);
+    }
+    for (const side of Object.keys(b.doors || {})) {
+      for (const gap of b.doors[side]) drawDoorMat(c, b, side, gap, t);
+    }
+    c.save();
+    c.strokeStyle = "#f08c00";
+    c.fillStyle = "rgba(255, 212, 59, 0.28)";
+    c.lineWidth = 3;
+    c.beginPath();
+    c.ellipse(COURT_MAT.x + COURT_MAT.w / 2, COURT_MAT.y + COURT_MAT.h / 2, COURT_MAT.w / 2, COURT_MAT.h / 2, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = "#7a3e12";
+    c.font = "700 16px " + FONT;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText("射籃", COURT_MAT.x + COURT_MAT.w / 2, COURT_MAT.y + COURT_MAT.h / 2);
+    c.restore();
+    c.fillStyle = "#f76707";
+    c.strokeStyle = INK;
+    c.lineWidth = 2;
+    c.beginPath();
+    c.arc(COURT_MAT.x + 28, COURT_MAT.y + COURT_MAT.h - 16, 7, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+  }
+
+  function queueShot() {
+    if (state.mode !== "basket" || state.dialog || !state.mini || state.mini.phase !== "play") return;
+    const nowMs = performance.now();
+    if (queueShot.last && nowMs - queueShot.last < 280) return;
+    queueShot.last = nowMs;
+    const m = state.mini;
+    pendingShots.push({ x: m.aimX, y: m.aimY });
+  }
+
+  function leaveMinigame() {
+    state.mode = "world";
+    state.mini = null;
+    pendingStrokes = 0;
+    pendingShots = [];
+    closeDialog();
+    state.snapCam = true;
+  }
+
+  function confirmLeaveMini() {
+    if (state.dialog || state.mode === "world") return;
+    const swim = state.mode === "swim";
+    openDialog({
+      title: "離開？",
+      body: swim
+        ? "呢場選拔會取消。可以遲啲再嚟。"
+        : "離開就結束呢場。如果已經刷新最高分，紀錄會留低。",
+      buttons: [
+        { label: "繼續玩", primary: true, onClick: closeDialog },
+        { label: "離開", warn: true, onClick: leaveMinigame },
+      ],
+    });
+  }
+
+  function startSwimRace() {
+    closeDialog();
+    pendingStrokes = 0;
+    state.mode = "swim";
+    state.mini = {
+      phase: "count",
+      count: 3,
+      goUntil: 0,
+      judge: "跟住節奏撳「衝」",
+      judgeUntil: 0,
+      stamina: 1,
+      impulse: 0,
+      lastStroke: -1,
+      recoverAt: 0,
+      lane: 1,
+      offLane: false,
+      place: 1,
+      splashes: [],
+      racers: [
+        { name: "小晴", lane: 0, color: "#ff8fab", hair: "#5c3317", skin: "#f6d2b5", speed: 1.14, rate: 6.1, phase: 0.4, progress: 0 },
+        { name: "小逸", lane: 1, color: "#ffd43b", hair: "#2b2118", skin: "#f3c49a", isPlayer: true, progress: 0, phase: 0 },
+        { name: "阿俊", lane: 2, color: "#74c0fc", hair: "#2b2118", skin: "#f6d2b5", speed: 1.28, rate: 6.6, phase: 1.1, progress: 0 },
+        { name: "家寶", lane: 3, color: "#69db7c", hair: "#3d2914", skin: "#e8b892", speed: 1.42, rate: 7.0, phase: 2.0, progress: 0 },
+      ],
+    };
+    announce("校隊選拔，25米自由泳");
+  }
+
+  function swimPlayer(m) {
+    return m.racers.find((r) => r.isPlayer);
+  }
+
+  function steerSwim(m, dt) {
+    const wish = inputVector();
+    m.lane = clamp(m.lane + wish.x * 2.35 * dt, 0, 3);
+    const nearest = Math.round(m.lane);
+    m.offLane = Math.abs(m.lane - nearest) > 0.3;
+    swimPlayer(m).lane = m.lane;
+  }
+
+  function applyStroke(m) {
+    const me = swimPlayer(m);
+    const gap = m.lastStroke < 0 ? 999 : ambient - m.lastStroke;
+    let q = 1;
+    let stam = 0;
+    let mash = false;
+    let text = "節奏好好";
+    if (m.lastStroke >= 0 && gap < 0.27) {
+      q = 0.12;
+      mash = true;
+      stam = -0.32;
+      text = "太快喇，攰咗";
+    } else if (m.lastStroke >= 0) {
+      const d = Math.abs(gap - STROKE_IDEAL);
+      q = Math.max(0.36, 1 - (d / 0.24) ** 2);
+      if (gap < 0.34) {
+        stam = -0.08;
+        text = "快咗少少";
+      } else if (d <= 0.07) {
+        stam = 0.04;
+        text = "節奏好好";
+      } else if (d <= 0.14) {
+        stam = 0;
+        text = "差少少";
+      } else {
+        stam = -0.02;
+        text = gap > STROKE_IDEAL ? "划慢咗" : "快咗少少";
+      }
+    } else text = "出發！";
+    m.stamina = clamp(m.stamina + stam, 0, 1);
+    const target = 1.28 * q * (0.1 + 0.9 * m.stamina);
+    m.impulse += (target - m.impulse) * 0.9;
+    m.lastStroke = ambient;
+    if (mash) m.recoverAt = ambient + 0.55;
+    m.judge = text;
+    m.judgeUntil = ambient + 0.7;
+    me.phase += 1.7;
+    m.splashes.push({ lane: m.lane, progress: me.progress, life: 0.38, side: Math.random() < 0.5 ? -1 : 1 });
+    if (mash) beep(170, 0.07, 0.035);
+    else beep(q > 0.85 ? 680 : 500, 0.045, 0.028);
+  }
+
+  function updateSwim(dt) {
+    const m = state.mini;
+    if (!m || m.phase === "done") return;
+    steerSwim(m, dt);
+    if (m.phase === "count") {
+      pendingStrokes = 0;
+      m.count -= dt;
+      if (m.count <= 0) {
+        m.phase = "race";
+        m.goUntil = ambient + 0.5;
+        m.judge = "划！";
+        m.judgeUntil = ambient + 0.6;
+        chimeOk();
+      }
+      return;
+    }
+    const me = swimPlayer(m);
+    while (pendingStrokes > 0) {
+      pendingStrokes--;
+      applyStroke(m);
+    }
+    m.impulse *= Math.exp(-0.4 * dt);
+    if (ambient >= m.recoverAt) m.stamina = Math.min(1, m.stamina + dt * 0.055);
+    const coast = 0.38 * (0.58 + 0.42 * m.stamina);
+    let speed = Math.max(0.84, coast + m.impulse);
+    if (m.offLane) speed *= 0.7;
+    me.progress += speed * dt;
+    me.phase += dt * (5 + m.impulse * 4);
+    for (const r of m.racers) {
+      if (r.isPlayer) continue;
+      r.phase += dt * r.rate;
+      if (r.finish == null) {
+        r.progress += r.speed * (1 + Math.sin(r.phase) * 0.05) * dt;
+        if (r.progress >= SWIM_LEN) {
+          r.progress = SWIM_LEN;
+          r.finish = ambient;
+        }
+      }
+    }
+    for (const s of m.splashes) s.life -= dt;
+    m.splashes = m.splashes.filter((s) => s.life > 0);
+    m.place = 1 + m.racers.filter((r) => !r.isPlayer && r.progress > me.progress + 0.05).length;
+    if (me.progress >= SWIM_LEN) {
+      me.progress = SWIM_LEN;
+      finishSwim();
+    }
+  }
+
+  function finishSwim() {
+    const m = state.mini;
+    if (!m || m.phase === "done") return;
+    m.phase = "done";
+    const me = swimPlayer(m);
+    if (me.finish == null) me.finish = ambient;
+    const place = 1 + m.racers.filter((r) => !r.isPlayer && r.finish != null && r.finish < me.finish).length;
+    m.place = place;
+    const qualified = place <= 2;
+    const already = state.swimTeam;
+    const order = m.racers.slice().sort((a, b) => {
+      if (a.finish != null && b.finish != null) return a.finish - b.finish;
+      if (a.finish != null) return -1;
+      if (b.finish != null) return 1;
+      return b.progress - a.progress;
+    }).map((r) => r.name).join("、");
+    if (qualified) {
+      state.swimTeam = true;
+      persist();
+      updateChip();
+      chimeWin();
+      openDialog({
+        title: place === 1 ? (already ? "第一名！" : "第一名，入選校隊！") : (already ? "前兩名！" : "入選游泳校隊！"),
+        body: already
+          ? "你游第 " + place + " 名。次序：" + order + "。\n你已經係游泳校隊，練習得好好。"
+          : "你游第 " + place + " 名。次序：" + order + "。\n教練話歡迎加入游泳校隊。之後都可以返嚟練習。",
+        buttons: [
+          { label: "再練習一次", primary: true, onClick: startSwimRace },
+          { label: "返回泳池", onClick: leaveMinigame },
+        ],
+      });
+    } else {
+      chimeFail();
+      openDialog({
+        title: already ? "練習完咗" : "今次未入到",
+        body: already
+          ? "今次第 " + place + " 名。次序：" + order + "。\n你仍然係游泳校隊。一下一下、大約每半秒撳一次「衝」。"
+          : "你游第 " + place + " 名。前兩名先至入到校隊。\n次序：" + order + "。\n一下一下、大約每半秒撳一次「衝」，唔好撳太密。",
+        buttons: [
+          { label: "再試一次", primary: true, onClick: startSwimRace },
+          { label: "返回泳池", onClick: leaveMinigame },
+        ],
+      });
+    }
+  }
+
+  function basketZone(aimY) {
+    if (aimY < 0.38) return { name: "近", points: 2, half: 0.56 };
+    if (aimY < 0.68) return { name: "中", points: 3, half: 0.28 };
+    return { name: "遠", points: 5, half: 0.14 };
+  }
+
+  function startBasketGame() {
+    closeDialog();
+    pendingShots = [];
+    queueShot.last = 0;
+    state.mode = "basket";
+    state.mini = {
+      phase: "play",
+      t: 30,
+      score: 0,
+      combo: 0,
+      aimX: 0,
+      aimY: 0.24,
+      lastInput: "key",
+      ball: null,
+      cooldown: 0,
+      floaters: [],
+      bestNew: false,
+      makes: 0,
+    };
+    announce("射籃開始，30秒");
+  }
+
+  function updateBasket(dt) {
+    const m = state.mini;
+    if (!m || m.phase === "done") return;
+    m.t -= dt;
+    m.cooldown = Math.max(0, m.cooldown - dt);
+    const keyX = (keys.has("a") || keys.has("arrowleft") ? -1 : 0) + (keys.has("d") || keys.has("arrowright") ? 1 : 0);
+    const keyY = (keys.has("w") || keys.has("arrowup") ? 1 : 0) + (keys.has("s") || keys.has("arrowdown") ? -1 : 0);
+    if (joy.active) {
+      m.aimX = clamp(joy.x * 1.12, -1, 1);
+      m.aimY = clamp(0.5 - joy.y * 0.55, 0.12, 0.94);
+      m.lastInput = "stick";
+    } else if (keyX || keyY) {
+      m.aimX = clamp(m.aimX + keyX * dt * 1.2, -1, 1);
+      m.aimY = clamp(m.aimY + keyY * dt * 0.9, 0.12, 0.94);
+      m.lastInput = "key";
+    } else if (m.lastInput === "stick") {
+      const k = 1 - Math.exp(-7 * dt);
+      m.aimX += (0 - m.aimX) * k;
+      m.aimY += (0.24 - m.aimY) * k;
+    }
+    if (m.ball) {
+      m.ball.u += dt / m.ball.dur;
+      if (m.ball.u >= 1) {
+        landShot(m.ball);
+        m.ball = null;
+      }
+    }
+    while (pendingShots.length && !m.ball && m.cooldown <= 0 && m.t > 0) {
+      launchShot(pendingShots.shift());
+    }
+    if (pendingShots.length > 2) pendingShots.length = 2;
+    for (const f of m.floaters) f.life -= dt;
+    m.floaters = m.floaters.filter((f) => f.life > 0);
+    if (m.t <= 0) {
+      m.t = 0;
+      finishBasket();
+    }
+  }
+
+  function launchShot(shot) {
+    const m = state.mini;
+    const zone = basketZone(shot.y);
+    const made = Math.abs(shot.x) <= zone.half;
+    m.ball = { x: shot.x, y: shot.y, u: 0, dur: 0.32, made, zone };
+    m.cooldown = 0.38;
+    beep(made ? 540 : 196, 0.04, 0.03);
+  }
+
+  function landShot(ball) {
+    const m = state.mini;
+    if (!m || m.phase === "done") return;
+    if (ball.made) {
+      m.combo += 1;
+      const bonus = Math.min(5, m.combo - 1);
+      const gain = ball.zone.points + bonus;
+      m.score += gain;
+      m.makes += 1;
+      m.floaters.push({
+        text: "+" + gain,
+        sub: m.combo > 1 ? "連擊 " + m.combo : ball.zone.name + "籃 " + ball.zone.points,
+        life: 0.9,
+      });
+      chimeSoft();
+      if (m.score > state.basketballBest) {
+        state.basketballBest = m.score;
+        m.bestNew = true;
+        persist();
+      }
+    } else {
+      m.combo = 0;
+      m.floaters.push({ text: "打板", sub: "對準中間", life: 0.7 });
+      beep(150, 0.08, 0.03);
+    }
+  }
+
+  function finishBasket() {
+    const m = state.mini;
+    if (!m || m.phase === "done") return;
+    m.phase = "done";
+    pendingShots = [];
+    const fresh = m.bestNew && m.score > 0 && m.score === state.basketballBest;
+    if (m.score > 0) chimeWin();
+    else chimeFail();
+    openDialog({
+      title: fresh ? "新高分！" : "時間到",
+      body: "你射到 " + m.score + " 分，入波 " + m.makes + " 球。\n最高紀錄：" + state.basketballBest + " 分。\n遠籃 5 分，連續入波會加連擊分。",
+      buttons: [
+        { label: "再玩一次", primary: true, onClick: startBasketGame },
+        { label: "返回操場", onClick: leaveMinigame },
+      ],
+    });
+  }
+
+  function paperCard(c, x, y, w, h, fill) {
+    roundRect(c, x, y, w, h, 12);
+    c.fillStyle = fill || "#fff8ef";
+    c.fill();
+    c.lineWidth = 3;
+    c.strokeStyle = INK;
+    c.stroke();
+  }
+
+  function drawSwimmerSprite(c, x, y, sw) {
+    const arm = Math.sin(sw.phase || 0);
+    c.save();
+    c.translate(x, y);
+    c.fillStyle = "rgba(20, 70, 110, 0.22)";
+    c.beginPath();
+    c.ellipse(0, 6, 16, 7, 0, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = sw.skin;
+    c.lineWidth = 4;
+    c.lineCap = "round";
+    c.beginPath();
+    c.moveTo(-5, 2);
+    c.quadraticCurveTo(-18, 8 + arm * 6, -8, -8 - arm * 12);
+    c.moveTo(5, 2);
+    c.quadraticCurveTo(18, 8 - arm * 6, 8, -8 + arm * 12);
+    c.stroke();
+    c.strokeStyle = INK;
+    c.lineWidth = 2;
+    roundRect(c, -8, -6, 16, 22, 8);
+    c.fillStyle = sw.color;
+    c.fill();
+    c.stroke();
+    c.beginPath();
+    c.arc(0, -12, 8.5, 0, Math.PI * 2);
+    c.fillStyle = sw.skin;
+    c.fill();
+    c.stroke();
+    c.fillStyle = sw.isPlayer ? "#ffd43b" : sw.hair;
+    c.beginPath();
+    c.arc(0, -14, 8.5, Math.PI * 1.02, Math.PI * 1.98);
+    c.fill();
+    c.fillStyle = INK;
+    c.beginPath();
+    c.arc(-2.5, -12, 1.15, 0, Math.PI * 2);
+    c.arc(2.5, -12, 1.15, 0, Math.PI * 2);
+    c.fill();
+    c.strokeStyle = INK;
+    c.lineWidth = 1.2;
+    c.beginPath();
+    c.arc(0, -9, 2.4, 0.15, Math.PI - 0.15);
+    c.stroke();
+    c.restore();
+  }
+
+  function controlReserve(h) {
+    return h < 520 ? 118 : 158;
+  }
+
+  function drawSwim(c, w, h) {
+    const m = state.mini;
+    if (!m) return;
+    const bg = c.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, "#d7f1ff");
+    bg.addColorStop(1, "#8ecae6");
+    c.fillStyle = bg;
+    c.fillRect(0, 0, w, h);
+    const compact = w < 560 || h < 520;
+    const infoY = compact ? 78 : 104;
+    paperCard(c, 12, infoY, w - 24, compact ? 44 : 50);
+    paperCard(c, w - 118, infoY + 6, 96, compact ? 32 : 38, m.place <= 2 ? "#d3f9d8" : "#fff8ef");
+    c.fillStyle = INK;
+    c.font = "700 " + (compact ? 16 : 20) + "px " + FONT;
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText("第 " + m.place + " 名", w - 70, infoY + (compact ? 22 : 25));
+    const judge = m.offLane && m.phase === "race" ? "返去泳線中間" : (m.judge || "跟住節奏");
+    c.font = "700 " + (compact ? 14 : 16) + "px " + FONT;
+    c.textAlign = "left";
+    c.textBaseline = "middle";
+    c.fillStyle = judge.indexOf("攰") >= 0 || judge.indexOf("快") >= 0 || judge.indexOf("慢") >= 0 ? "#e8590c" : "#2b8a3e";
+    c.fillText(judge, 24, infoY + (compact ? 22 : 25));
+    const judgeW = c.measureText(judge).width;
+    const since = m.lastStroke < 0 ? 0 : ambient - m.lastStroke;
+    const tick = 0.5 / 0.72;
+    const fill = clamp(since / 0.72, 0, 1);
+    const meterW = Math.min(120, Math.max(64, w * 0.16));
+    const meterX = w - 136 - meterW;
+    c.fillStyle = "#8a5a34";
+    c.font = "700 12px " + FONT;
+    c.textAlign = "right";
+    c.fillText("節奏", meterX - 6, infoY + (compact ? 22 : 25));
+    const meterY = infoY + (compact ? 16 : 18);
+    roundRect(c, meterX, meterY, meterW, 12, 6);
+    c.fillStyle = "#fff";
+    c.fill();
+    c.lineWidth = 2;
+    c.strokeStyle = INK;
+    c.stroke();
+    c.save();
+    roundRect(c, meterX, meterY, meterW, 12, 6);
+    c.clip();
+    c.fillStyle = fill > tick + 0.18 ? "#ffc078" : "#ffd43b";
+    c.fillRect(meterX, meterY, meterW * fill, 12);
+    c.restore();
+    c.fillStyle = "#e8590c";
+    c.fillRect(meterX + meterW * tick - 1.5, meterY - 2, 3, 16);
+    const stamW = Math.min(120, Math.max(64, (meterX - 160)));
+    if (stamW > 40) {
+      const sx = 24 + judgeW + 16;
+      if (sx + stamW < meterX - 36) {
+        c.fillStyle = "#8a5a34";
+        c.font = "700 12px " + FONT;
+        c.textAlign = "left";
+        c.fillText("體力", sx, infoY + (compact ? 22 : 25));
+        const barX = sx + 32;
+        roundRect(c, barX, meterY, stamW - 36, 12, 6);
+        c.fillStyle = "#fff";
+        c.fill();
+        c.strokeStyle = INK;
+        c.lineWidth = 2;
+        c.stroke();
+        c.save();
+        roundRect(c, barX, meterY, stamW - 36, 12, 6);
+        c.clip();
+        c.fillStyle = m.stamina < 0.28 ? "#ff6b6b" : "#69db7c";
+        c.fillRect(barX, meterY, (stamW - 36) * m.stamina, 12);
+        c.restore();
+      }
+    }
+
+    const pool = {
+      x: 16,
+      y: infoY + (compact ? 52 : 58),
+      w: w - 32,
+      h: Math.max(110, h - (infoY + (compact ? 52 : 58)) - controlReserve(h)),
+    };
+    roundRect(c, pool.x - 6, pool.y - 6, pool.w + 12, pool.h + 12, 16);
+    c.fillStyle = "#f4e2c4";
+    c.fill();
+    c.lineWidth = 4;
+    c.strokeStyle = INK;
+    c.stroke();
+    roundRect(c, pool.x, pool.y, pool.w, pool.h, 12);
+    c.fillStyle = waterPattern() || "#4dabf7";
+    c.fill();
+    const laneW = pool.w / 4;
+    for (let i = 1; i < 4; i++) {
+      const x = pool.x + laneW * i;
+      for (let y = pool.y + 8; y < pool.y + pool.h - 8; y += 16) {
+        c.beginPath();
+        c.arc(x, y, 3, 0, Math.PI * 2);
+        c.fillStyle = ((y / 16) | 0) % 2 ? "#ff8787" : "#fff";
+        c.fill();
+      }
+    }
+    c.strokeStyle = "rgba(255,255,255,0.9)";
+    c.lineWidth = 3;
+    c.setLineDash([8, 6]);
+    c.beginPath();
+    c.moveTo(pool.x + 8, pool.y + 18);
+    c.lineTo(pool.x + pool.w - 8, pool.y + 18);
+    c.stroke();
+    c.setLineDash([]);
+    c.fillStyle = "#fff";
+    c.font = "700 12px " + FONT;
+    c.textAlign = "left";
+    c.textBaseline = "middle";
+    c.fillText("25米", pool.x + 8, pool.y + 18);
+    c.fillText("0米", pool.x + 8, pool.y + pool.h - 16);
+    for (const s of m.splashes) {
+      const sx = pool.x + (s.lane + 0.5) * laneW + s.side * 14;
+      const sy = pool.y + pool.h - 24 - (s.progress / SWIM_LEN) * (pool.h - 48);
+      c.globalAlpha = Math.max(0, s.life * 2);
+      c.fillStyle = "#fff";
+      c.beginPath();
+      c.arc(sx, sy, 4 + (1 - s.life) * 6, 0, Math.PI * 2);
+      c.fill();
+      c.globalAlpha = 1;
+    }
+    const ordered = m.racers.slice().sort((a, b) => a.progress - b.progress);
+    for (const r of ordered) {
+      const x = pool.x + (r.lane + 0.5) * laneW;
+      const y = pool.y + pool.h - 28 - (Math.min(SWIM_LEN, r.progress) / SWIM_LEN) * (pool.h - 52);
+      if (r.isPlayer) {
+        c.strokeStyle = "#ffd43b";
+        c.lineWidth = 3;
+        c.beginPath();
+        c.arc(x, y, 18, 0, Math.PI * 2);
+        c.stroke();
+      }
+      drawSwimmerSprite(c, x, y, r);
+      c.font = "700 12px " + FONT;
+      c.textAlign = "center";
+      c.textBaseline = "top";
+      c.fillStyle = INK;
+      c.fillText(r.name, x, y + 16);
+    }
+    if (m.phase === "count") {
+      c.fillStyle = "rgba(255,248,239,0.72)";
+      c.fillRect(pool.x, pool.y, pool.w, pool.h);
+      const n = Math.max(1, Math.ceil(m.count));
+      c.fillStyle = INK;
+      c.font = "700 72px " + FONT;
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(String(n), pool.x + pool.w / 2, pool.y + pool.h / 2);
+      c.font = "700 16px " + FONT;
+      c.fillText("左右揀泳線，金線係節奏", pool.x + pool.w / 2, pool.y + pool.h / 2 + 48);
+    } else if (ambient < m.goUntil) {
+      c.fillStyle = "#fff";
+      c.strokeStyle = INK;
+      c.lineWidth = 6;
+      c.font = "700 64px " + FONT;
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.strokeText("游！", pool.x + pool.w / 2, pool.y + pool.h / 2);
+      c.fillText("游！", pool.x + pool.w / 2, pool.y + pool.h / 2);
+    }
+
+  }
+
+  function basketGeom(w, h) {
+    const top = h < 520 ? 132 : 164;
+    return {
+      x: 16,
+      y: top,
+      w: w - 32,
+      h: Math.max(140, h - top - controlReserve(h)),
+    };
+  }
+
+  function aimToCourt(g, ax, ay) {
+    return {
+      x: g.x + g.w * (0.5 + ax * 0.46),
+      y: g.y + g.h * (0.88 - ay * 0.7),
+    };
+  }
+
+  function drawBasket(c, w, h) {
+    const m = state.mini;
+    if (!m) return;
+    c.fillStyle = "#f3e6cf";
+    c.fillRect(0, 0, w, h);
+    c.strokeStyle = "rgba(90, 58, 36, 0.18)";
+    c.lineWidth = 8;
+    for (let x = 20; x < w; x += 70) {
+      c.beginPath();
+      c.moveTo(x, 0);
+      c.lineTo(x, h);
+      c.stroke();
+    }
+    const g = basketGeom(w, h);
+    roundRect(c, g.x, g.y, g.w, g.h, 16);
+    c.fillStyle = indoorPattern() || "#c6ebbd";
+    c.fill();
+    c.lineWidth = 4;
+    c.strokeStyle = INK;
+    c.stroke();
+    c.save();
+    roundRect(c, g.x, g.y, g.w, g.h, 16);
+    c.clip();
+    const bands = [
+      { y0: 0.68, y1: 0.96, fill: "rgba(255, 146, 43, 0.18)", label: "遠 5分" },
+      { y0: 0.38, y1: 0.68, fill: "rgba(255, 212, 59, 0.16)", label: "中 3分" },
+      { y0: 0.1, y1: 0.38, fill: "rgba(105, 219, 124, 0.16)", label: "近 2分" },
+    ];
+    c.font = "700 14px " + FONT;
+    c.textAlign = "left";
+    c.textBaseline = "middle";
+    for (const band of bands) {
+      const p0 = aimToCourt(g, 0, band.y1);
+      const p1 = aimToCourt(g, 0, band.y0);
+      c.fillStyle = band.fill;
+      c.fillRect(g.x, p0.y, g.w, p1.y - p0.y);
+      c.fillStyle = "rgba(61, 44, 34, 0.75)";
+      c.fillText(band.label, g.x + 10, (p0.y + p1.y) / 2);
+    }
+    c.fillStyle = "rgba(47, 158, 68, 0.22)";
+    c.beginPath();
+    const steps = 8;
+    for (let i = 0; i <= steps; i++) {
+      const ay = 0.12 + (0.82 * i) / steps;
+      const p = aimToCourt(g, basketZone(ay).half, ay);
+      if (i === 0) c.moveTo(p.x, p.y);
+      else c.lineTo(p.x, p.y);
+    }
+    for (let i = steps; i >= 0; i--) {
+      const ay = 0.12 + (0.82 * i) / steps;
+      const p = aimToCourt(g, -basketZone(ay).half, ay);
+      c.lineTo(p.x, p.y);
+    }
+    c.closePath();
+    c.fill();
+    c.restore();
+    const hoop = aimToCourt(g, 0, 0.9);
+    c.fillStyle = "#f8f9fa";
+    c.strokeStyle = INK;
+    c.lineWidth = 3;
+    roundRect(c, hoop.x - 34, hoop.y - 28, 68, 36, 4);
+    c.fill();
+    c.stroke();
+    c.strokeStyle = "#f76707";
+    c.lineWidth = 4;
+    c.beginPath();
+    c.ellipse(hoop.x, hoop.y + 8, 18, 8, 0, 0, Math.PI * 2);
+    c.stroke();
+    const zone = basketZone(m.aimY);
+    const made = Math.abs(m.aimX) <= zone.half;
+    const aim = aimToCourt(g, m.aimX, m.aimY);
+    c.strokeStyle = made ? "#2b8a3e" : "#e03131";
+    c.lineWidth = 3;
+    c.beginPath();
+    c.arc(aim.x, aim.y, 14, 0, Math.PI * 2);
+    c.stroke();
+    c.beginPath();
+    c.moveTo(aim.x - 8, aim.y);
+    c.lineTo(aim.x + 8, aim.y);
+    c.moveTo(aim.x, aim.y - 8);
+    c.lineTo(aim.x, aim.y + 8);
+    c.stroke();
+    c.font = "700 13px " + FONT;
+    c.textAlign = "left";
+    c.textBaseline = "middle";
+    c.fillStyle = made ? "#2b8a3e" : "#c92a2a";
+    c.fillText(made ? zone.points + "分" : "會打板", aim.x + 18, aim.y);
+    const feet = { x: g.x + g.w / 2, y: g.y + g.h - 18 };
+    c.fillStyle = "#ffd43b";
+    c.strokeStyle = INK;
+    c.lineWidth = 2;
+    c.beginPath();
+    c.arc(feet.x, feet.y, 10, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = INK;
+    c.font = "700 11px " + FONT;
+    c.textAlign = "center";
+    c.fillText("小逸", feet.x, feet.y + 22);
+    if (m.ball) {
+      const u = clamp(m.ball.u, 0, 1);
+      const from = feet;
+      const to = aimToCourt(g, m.ball.x, m.ball.y);
+      const x = from.x + (to.x - from.x) * u;
+      const y = from.y + (to.y - from.y) * u - Math.sin(u * Math.PI) * 46;
+      c.fillStyle = "#f76707";
+      c.strokeStyle = INK;
+      c.lineWidth = 2;
+      c.beginPath();
+      c.arc(x, y, 8, 0, Math.PI * 2);
+      c.fill();
+      c.stroke();
+    }
+    for (const f of m.floaters) {
+      c.globalAlpha = Math.max(0, Math.min(1, f.life));
+      c.fillStyle = f.text === "打板" ? "#c92a2a" : "#2b8a3e";
+      c.font = "700 28px " + FONT;
+      c.textAlign = "center";
+      c.fillText(f.text, g.x + g.w / 2, g.y + 54);
+      c.font = "700 14px " + FONT;
+      c.fillText(f.sub || "", g.x + g.w / 2, g.y + 78);
+      c.globalAlpha = 1;
+    }
+
+    const hudY = h < 520 ? 78 : 104;
+    const sec = Math.ceil(m.t);
+    paperCard(c, 16, hudY, Math.min(168, w * 0.34), 52);
+    c.fillStyle = "#8a5a34";
+    c.font = "700 12px " + FONT;
+    c.textAlign = "left";
+    c.textBaseline = "middle";
+    c.fillText("得分", 28, hudY + 16);
+    c.fillStyle = INK;
+    c.font = "700 26px " + FONT;
+    c.fillText(String(m.score), 28, hudY + 36);
+    paperCard(c, w - 132, hudY, 116, 52, sec <= 5 ? "#ff6b6b" : "#fff8ef");
+    c.fillStyle = sec <= 5 ? "#fff" : "#8a5a34";
+    c.font = "700 12px " + FONT;
+    c.fillText("剩餘", w - 118, hudY + 16);
+    c.fillStyle = sec <= 5 ? "#fff" : INK;
+    c.font = "700 26px " + FONT;
+    c.fillText(sec + " 秒", w - 118, hudY + 36);
+    const comboText = (m.combo > 1 ? "連擊 " + m.combo : "最高 " + state.basketballBest) + (m.bestNew ? " · 新高分" : "");
+    c.fillStyle = INK;
+    c.font = "700 16px " + FONT;
+    c.textAlign = "center";
+    c.fillText(comboText, w / 2, hudY + 26);
+    c.font = "700 13px " + FONT;
+    c.fillStyle = "#5c4a3a";
+    const hint = w < 560 ? "瞄準後撳「互動」，或者放開搖桿" : "瞄準後撳「互動」／E，或者放開搖桿";
+    c.fillText(hint, w / 2, h - controlReserve(h) + 22);
+  }
+
   function boot() {
     buildWorld();
     selfCheck();
     resize();
     updateStars();
+    updateChip();
     $("btn-mute").textContent = state.mute ? "靜音" : "聲音";
     window.addEventListener("resize", resize);
     if (window.visualViewport) window.visualViewport.addEventListener("resize", resize);
@@ -2330,7 +3548,10 @@
     window.addEventListener("pointermove", onPointerMove, { capture: true });
     window.addEventListener("pointerup", onPointerUp, { capture: true });
     window.addEventListener("pointercancel", onPointerUp, { capture: true });
-    bindHold($("btn-sprint"), (v) => { sprintHeld = v; });
+    bindHold($("btn-sprint"), (v) => {
+      sprintHeld = v;
+      if (v && state.mode === "swim" && !state.dialog) pendingStrokes++;
+    });
     $("btn-interact").addEventListener("pointerdown", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -2338,6 +3559,7 @@
       doInteract();
     });
     $("btn-help").addEventListener("click", () => { if (!state.dialog) openHelp(); });
+    $("btn-leave").addEventListener("click", () => { if (!state.dialog && state.mode !== "world") confirmLeaveMini(); });
     $("btn-abandon").addEventListener("click", () => { if (!state.dialog && state.mission) confirmAbandon(); });
     $("btn-mute").addEventListener("click", () => {
       state.mute = !state.mute;
@@ -2357,6 +3579,17 @@
           if (back) back.onClick();
           e.preventDefault();
         }
+        return;
+      }
+      if (state.mode === "swim" && k === "shift" && !e.repeat) pendingStrokes++;
+      if (state.mode !== "world" && e.key === "Escape") {
+        confirmLeaveMini();
+        e.preventDefault();
+        return;
+      }
+      if (state.mode === "basket" && (k === "e" || k === "enter") && !e.repeat) {
+        queueShot();
+        e.preventDefault();
         return;
       }
       if ((k === "e" || k === "enter") && !e.repeat) {
@@ -2388,6 +3621,10 @@
         timeLeft: Math.ceil(state.timeLeft),
         done: [...state.done],
         catching: state.catching > 0,
+        mode: state.mode,
+        swimTeam: state.swimTeam,
+        basketballBest: state.basketballBest,
+        mini: state.mini,
         teacherX: Math.round(teacher.x),
         teacherY: Math.round(teacher.y),
         issues,
