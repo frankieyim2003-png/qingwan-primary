@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="晴灣小學">
+  <meta name="theme-color" content="#67c256">
+  <title>晴灣小學｜校園走走</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="view" aria-hidden="true"></canvas>
+
+    <header id="topbar">
+      <div id="loc-card">
+        <div id="brand">晴灣小學</div>
+        <div id="place">校門</div>
+        <div id="stars" aria-label="完成咗嘅任務">☆☆☆</div>
+      </div>
+      <div id="mission-card" class="hidden">
+        <div id="mission-kicker">任務</div>
+        <div id="mission-title"></div>
+        <div id="mission-obj"></div>
+        <div id="timer" class="hidden"></div>
+        <button id="btn-abandon" type="button">放棄任務</button>
+      </div>
+      <div id="top-actions">
+        <button id="btn-help" type="button">說明</button>
+        <button id="btn-mute" type="button" aria-pressed="false">聲音</button>
+      </div>
+    </header>
+
+    <div id="minimap-wrap">
+      <canvas id="mini" width="320" height="240" aria-label="小地圖"></canvas>
+      <span>小地圖</span>
+    </div>
+
+    <div id="badge" class="hidden">帶住功課簿</div>
+    <div id="toast" class="hidden" role="status"></div>
+    <div id="banner" class="hidden" role="status"></div>
+    <div id="live" class="sr-only" aria-live="polite"></div>
+
+    <div id="joy" aria-hidden="true">
+      <div id="joy-base"><div id="joy-knob"></div></div>
+    </div>
+
+    <button id="btn-interact" type="button" class="hidden">互動</button>
+    <button id="btn-sprint" type="button" aria-label="衝刺">衝</button>
+
+    <div id="overlay" class="hidden">
+      <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+        <h2 id="sheet-title"></h2>
+        <p id="sheet-body"></p>
+        <div id="sheet-actions"></div>
+      </div>
+    </div>
+
+    <div id="loading">載入緊晴灣小學…</div>
+  </div>
+  <script src="js/game.js"></script>
+</body>
+</html>
