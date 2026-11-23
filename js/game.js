@@ -1,4 +1,4 @@
-/* 晴灣小學 — a tiny fictional campus for a parent and a Primary 4 child.
+/* 圓形小學 — a tiny fictional campus for a parent and a Primary 4 child.
    No real school, no fighting. Patrols are for sneaking past, never combat. */
 (function () {
   "use strict";
@@ -40,7 +40,7 @@
 
   const art = { ready: false, xiaole: null, npcs: null, props: null, pat: {}, keep: [] };
 
-  /* Sprite rects are tight opaque bounds: [x, y, w, h]. 小樂 rows are down, left, right, up. */
+  /* Sprite rects are tight opaque bounds: [x, y, w, h]. 小逸 rows are down, left, right, up. */
   const XIAOLE = [
     [[83, 28, 87, 201], [332, 30, 106, 198], [588, 30, 109, 198], [845, 31, 106, 197]],
     [[84, 278, 87, 203], [328, 281, 104, 199], [584, 280, 104, 200], [841, 281, 102, 199]],
@@ -199,7 +199,7 @@
       intro: "黃老師話：有本功課簿留咗喺小花園。\n請你攞返嚟，交到圖書館。\n行近功課簿就會自動攞起。",
       objective: "去小花園攞功課簿",
       winTitle: "交到喇！",
-      win: "黃老師接過功課簿：多謝你，小樂！同學可以攞返功課喇。",
+      win: "黃老師接過功課簿：多謝你，小逸！同學可以攞返功課喇。",
     },
     {
       id: "stealth",
@@ -208,7 +208,7 @@
       intro: "天台可以望到成個校園。\n陳老師喺通道巡邏。黃色圈同扇形係佢望到嘅地方。\n等佢行開，入課室，再上樓梯去觀景位。\n被見到都唔緊要，可以再試。",
       objective: "避開老師，去天台觀景位",
       winTitle: "登上天台！",
-      win: "你行到觀景位，見到成個晴灣小學。風輕輕吹過，好好玩。",
+      win: "你行到觀景位，見到成個圓形小學。風輕輕吹過，好好玩。",
       failTitle: "老師見到你",
       fail: "陳老師友善地揮揮手：小息未完，返去操場玩啦。等佢行開，我哋再試過。",
     },
@@ -621,7 +621,7 @@
       if (!findPath(grid, route[2], route[3], route[4], route[5])) found.push("行唔到：" + route[0]);
     }
     issues = found;
-    if (found.length) console.warn("晴灣小學地圖檢查", found);
+    if (found.length) console.warn("圓形小學地圖檢查", found);
     return found;
   }
 
@@ -785,8 +785,8 @@
 
   function openWelcome() {
     openDialog({
-      title: "晴灣小學",
-      body: "你好，我係小樂！呢度係我哋嘅小學。\n\n行：撳住左下角搖桿。\n電腦可以用 WASD 或者方向鍵。\n衝：按住「衝」或者 Shift。\n互動：行近之後撳「互動」或者 E。\n\n先四周圍走吓，再去校門任務板揀任務。",
+      title: "圓形小學",
+      body: "你好，我係小逸！呢度係我哋嘅小學。\n\n行：撳住左下角搖桿。\n電腦可以用 WASD 或者方向鍵。\n衝：按住「衝」或者 Shift。\n互動：行近之後撳「互動」或者 E。\n\n先四周圍走吓，再去校門任務板揀任務。",
       buttons: [{ label: "開始逛校園", primary: true, onClick: () => { closeDialog(); joyEl.classList.add("hint"); } }],
     });
   }
@@ -956,7 +956,7 @@
     if (target.kind === "teacher") {
       const body = state.mission?.id === "stealth"
         ? "佢望緊通道。黃色範圍入面會被見到，等佢行開先。"
-        : "小樂，記得準時返班。想挑戰吓，可以去校門任務板睇吓。";
+        : "小逸，記得準時返班。想挑戰吓，可以去校門任務板睇吓。";
       return openDialog({
         title: "陳老師",
         body,
@@ -1718,7 +1718,7 @@
     c.textAlign = "center";
     c.textBaseline = "middle";
     c.fillStyle = "#7a3e12";
-    c.fillText("晴灣小學", cx, top + dh * 0.55);
+    c.fillText("圓形小學", cx, top + dh * 0.55);
   }
 
   function drawHopscotch(c) {
