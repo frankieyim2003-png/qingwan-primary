@@ -1,8 +1,8 @@
 GitHub Pages：https://frankieyim2003-png.github.io/qingwan-primary/
 
-# 晴灣小學
+# 圓形小學
 
-一個給小朋友同家長試玩嘅校園散步原型。你可以喺虛構嘅**晴灣小學**自由行走，再完成三個短任務。
+一個給小朋友同家長試玩嘅校園散步原型。你可以喺虛構嘅**圓形小學**自由行走，再完成三個短任務。
 
 呢間學校、校服、老師同同學都係虛構，唔係任何真實學校。
 
@@ -54,4 +54,4 @@ python3 -m http.server 8747
 
 ## English
 
-Sunny Bay Primary is a small, kid-friendly campus toy: walk around, then finish three short errands. It is a fictional school. Open `index.html` in a browser, or serve the folder with any static server. Phone: drag the left side to walk, hold 衝 to sprint, tap 互動 beside a person or the quest board. Desktop: WASD or arrow keys, Shift to sprint, E to talk.
+圓形小學 is a small, kid-friendly campus toy: walk around, then finish three short errands. It is a fictional school. Open `index.html` in a browser, or serve the folder with any static server. Phone: drag the left side to walk, hold 衝 to sprint, tap 互動 beside a person or the quest board. Desktop: WASD or arrow keys, Shift to sprint, E to talk.
